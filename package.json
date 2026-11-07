@@ -1,0 +1,26 @@
+{
+  "name": "future-tech-hindi-publishing-app",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Approval-based YouTube and Instagram publishing backend and dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js",
+    "setup": "node scripts/setup.js"
+  },
+  "engines": {
+    "node": ">=18 <25"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "googleapis": "^144.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0"
+  }
+}

@@ -1,0 +1,49 @@
+<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Future Tech Hindi AI Creator Studio</title><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><meta name="theme-color" content="#5b3df5">
+<style>:root{--bg:#f6f7fb;--cd:#fff;--tx:#14161f;--mu:#667085;--ac:#5b3df5;--bd:#e2e4ee;--ok:#16794c;--er:#c0262d}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--cd:#181b25;--tx:#eceef5;--mu:#98a2b3;--ac:#8b78ff;--bd:#2a2e3d;--ok:#4cc38a;--er:#ff6b72}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,"Noto Sans Devanagari",sans-serif}main{max-width:900px;margin:auto;padding:16px}
+h1{font-size:20px}h2{font-size:16px;margin:24px 0 8px}.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0;display:grid;gap:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:600px){.row{grid-template-columns:1fr}}
+input,textarea,select,button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px;width:100%}
+button{cursor:pointer;width:auto}button.pri{background:var(--ac);color:#fff;border:0}button:disabled{opacity:.5}video{width:100%;max-height:380px;background:#000;border-radius:8px}
+a{color:var(--ac)}.mu{color:var(--mu)}.er{color:var(--er)}.ok{color:var(--ok)}#msg{min-height:22px;font-weight:600}label{display:block}input[type=checkbox]{width:auto}.acts{display:flex;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--bd)}.sc{overflow-x:auto}</style></head><body><main>
+<h1>🎬 Future Tech Hindi AI Creator Studio</h1><div id="msg"></div>
+<section id="login" hidden class="card"><b>लॉगिन / पहला रजिस्ट्रेशन</b><input id="em" type="email" placeholder="ईमेल"><input id="pw" type="password" placeholder="पासवर्ड (10+ अक्षर)"><div class="acts"><button class="pri" id="bl">लॉगिन</button><button id="br">रजिस्टर</button></div></section>
+<section id="app" hidden>
+<div class="acts" style="justify-content:space-between"><span class="mu">हर वीडियो PENDING_APPROVAL से शुरू होता है; बिना आपकी मंज़ूरी के कुछ पब्लिश नहीं होता।</span><button id="lo">लॉगआउट</button></div>
+<h2>कनेक्टेड अकाउंट</h2><div class="row" id="acc"></div>
+<h2>नया वीडियो (MP4)</h2><form id="uf" class="card"><input type="file" name="video" accept="video/mp4" required><input name="title" placeholder="शीर्षक" maxlength="100" required><textarea name="description" rows="3" placeholder="विवरण"></textarea><div class="row"><input name="tags" placeholder="टैग (कॉमा से अलग)"><input name="hashtags" placeholder="#हैशटैग #AI"></div><button class="pri">अपलोड करें (PENDING_APPROVAL)</button></form>
+<h2>वीडियो और मंज़ूरी</h2><div id="vids"></div>
+<h2>प्रकाशन इतिहास (प्लेटफ़ॉर्म से पुष्टि के बाद)</h2><div class="card sc"><table><thead><tr><th>वीडियो</th><th>प्लेटफ़ॉर्म</th><th>लिंक</th><th>समय</th></tr></thead><tbody id="hist"></tbody></table></div>
+</section>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),P={youtube:'YouTube',instagram:'Instagram'};
+const api=async(u,o={})=>{const r=await fetch(u,{credentials:'same-origin',...o,headers:o.body instanceof FormData?{}:{'Content-Type':'application/json'}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'त्रुटि '+r.status);return j};
+const msg=(t,bad)=>{$('#msg').textContent=t;$('#msg').className=bad?'er':'ok'};let busy=false;
+async function load(){try{const me=await api('/api/me');$('#login').hidden=true;$('#app').hidden=false;
+ $('#acc').innerHTML=Object.keys(P).map(p=>{const a=me.accounts.find(x=>x.platform===p);return `<div class=card><b>${P[p]}</b>${a?`<span class=ok>✅ जुड़ा: ${esc(a.display_name)}</span>`:'<span class=mu>जुड़ा नहीं</span>'}<a href="/api/auth/${p}"><button>${a?'दोबारा कनेक्ट':'कनेक्ट करें'}</button></a></div>`}).join('');
+ await vids();await hist()}catch{$('#login').hidden=false;$('#app').hidden=true}}
+const stat=(a,p)=>a.post_url?`<a href="${esc(a.post_url)}" target=_blank rel=noopener>✅ प्रकाशित</a>`:a.job_status==='FAILED'?`<span class=er>❌ फेल: ${esc(a.error)}</span>`:a.status==='APPROVED'?(a.scheduled_at?'⏰ शेड्यूल्ड '+new Date(a.scheduled_at).toLocaleString('hi-IN'):'⏳ कतार में'):a.status==='REJECTED'?'🚫 रिजेक्ट':'⏳ मंज़ूरी बाकी';
+async function vids(){const l=await api('/api/videos');$('#vids').innerHTML=l.length?l.map(v=>{const ap=Object.fromEntries(v.approvals.map(a=>[a.platform,a]));
+ return `<div class=card data-id=${v.id}><video controls preload=metadata src="/api/videos/${v.id}/stream"></video>
+<input class=t value="${esc(v.title)}" maxlength=100><textarea class=d rows=3>${esc(v.description)}</textarea><div class=row><input class=g placeholder="टैग" value="${esc(v.tags)}"><input class=h placeholder="#हैशटैग" value="${esc(v.hashtags)}"></div>
+${Object.keys(P).map(p=>`<label><input type=checkbox class=pl value=${p} ${ap[p].post_url?'disabled':'checked'}> ${P[p]} — ${stat(ap[p],p)}</label>`).join('')}
+<div class=row><select class=vis><option value=private>YouTube: Private</option><option value=unlisted>YouTube: Unlisted</option><option value=public>YouTube: Public</option></select><input type=datetime-local class=at title="खाली = अभी"></div>
+<div class=acts><button data-a=save>Edit सेव करें</button><button class=pri data-a=pub>Approve &amp; Publish</button><button data-a=rej>Reject</button></div></div>`}).join(''):'<p class=mu>अभी कोई वीडियो नहीं।</p>'}
+async function hist(){const h=await api('/api/publish/history');$('#hist').innerHTML=h.map(x=>`<tr><td>${esc(x.title)}</td><td>${P[x.platform]}</td><td><a href="${esc(x.post_url)}" target=_blank rel=noopener>खोलें</a></td><td>${esc(x.published_at)}</td></tr>`).join('')||'<tr><td colspan=4 class=mu>खाली</td></tr>'}
+const body=c=>({title:c.querySelector('.t').value,description:c.querySelector('.d').value,tags:c.querySelector('.g').value,hashtags:c.querySelector('.h').value});
+document.addEventListener('click',async e=>{const b=e.target.closest('button[data-a]');if(!b||busy)return;const c=b.closest('.card'),id=+c.dataset.id,a=b.dataset.a;busy=true;
+ try{if(a==='save'){await api('/api/videos/'+id,{method:'PATCH',body:JSON.stringify(body(c))});msg('सेव हुआ; मंज़ूरी दोबारा ज़रूरी है')}
+ if(a==='rej'){await api(`/api/videos/${id}/reject`,{method:'POST',body:'{}'});msg('रिजेक्ट किया')}
+ if(a==='pub'){const ps=[...c.querySelectorAll('.pl:checked')].map(x=>x.value);if(!ps.length)throw new Error('कम से कम एक प्लेटफ़ॉर्म चुनें');
+  if(!confirm('प्रीव्यू देख लिया? चुने हुए प्लेटफ़ॉर्म ('+ps.map(p=>P[p]).join(', ')+') पर पब्लिश करने की मंज़ूरी दें?'))throw new Error('मंज़ूरी नहीं दी गई');
+  await api('/api/videos/'+id,{method:'PATCH',body:JSON.stringify(body(c))});const at=c.querySelector('.at').value;
+  for(const p of ps){await api('/api/publish/approve',{method:'POST',body:JSON.stringify({videoId:id,platform:p,visibility:c.querySelector('.vis').value,scheduledAt:at?new Date(at).toISOString():undefined})});
+   if(at)msg(P[p]+': शेड्यूल हुआ');else{msg(P[p]+' पर अपलोड हो रहा है… (समय लग सकता है)');const r=await api('/api/publish/'+p,{method:'POST',body:JSON.stringify({videoId:id})});msg('✅ '+P[p]+' पर प्रकाशित: '+r.url)}}}
+ }catch(x){msg(x.message,1)}busy=false;vids().catch(()=>{});hist().catch(()=>{})});
+$('#uf').onsubmit=async e=>{e.preventDefault();try{msg('अपलोड हो रहा है…');await api('/api/videos',{method:'POST',body:new FormData(e.target)});e.target.reset();msg('अपलोड हुआ — PENDING_APPROVAL');await vids()}catch(x){msg(x.message,1)}};
+const auth=p=>async()=>{try{await api('/api/auth/'+p,{method:'POST',body:JSON.stringify({email:$('#em').value,password:$('#pw').value})});load()}catch(x){msg(x.message,1)}};
+$('#bl').onclick=auth('login');$('#br').onclick=auth('register');$('#lo').onclick=async()=>{await api('/api/auth/logout',{method:'POST',body:'{}'});load()};
+const q=new URLSearchParams(location.search);if(q.get('connected'))msg('✅ '+P[q.get('connected')]+' कनेक्ट हुआ');if(q.get('error'))msg(q.get('error'),1);load();
+</script></main></body></html>
