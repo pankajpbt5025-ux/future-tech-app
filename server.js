@@ -115,4 +115,3 @@ app.get('/healthz',(q,r)=>r.json({ok:true}));
 app.use(express.static(path.join(__dirname,'public')));
 app.use((e,req,res,next)=>{audit(req,req.uid,'error',e.message);res.status(e instanceof multer.MulterError?400:500).json({error:e instanceof multer.MulterError?'अपलोड त्रुटि: '+e.message:'सर्वर त्रुटि'})});
 app.listen(E.PORT||3000,()=>console.log('Creator Studio चालू: '+BASE));
-app.listen(E.PORT||3000,'0.0.0.0',()=>console.log('Creator Studio चालू: '+BASE));
